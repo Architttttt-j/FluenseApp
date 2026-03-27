@@ -1,4 +1,5 @@
 // lib/screens/visits/visit_logger_screen.dart
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -107,6 +108,12 @@ class _VisitLoggerScreenState extends State<VisitLoggerScreen> {
       setState(() => _submitting = false);
       return;
     }
+    String? photoBase64;
+    if (_image != null) {
+      final bytes = await _image!.readAsBytes();
+      photoBase64 = base64Encode(bytes);
+    }
+
     final success = await ApiService.endVisit(
       visitId: widget.visitId,
       lat: pos.latitude,
@@ -114,6 +121,7 @@ class _VisitLoggerScreenState extends State<VisitLoggerScreen> {
       products: _selectedProducts,
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       collaboratorMrId: _selectedCollaboratorId,
+      photoBase64: photoBase64,
     );
     setState(() => _submitting = false);
     if (success && mounted) {

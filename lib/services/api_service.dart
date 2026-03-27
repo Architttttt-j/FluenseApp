@@ -40,27 +40,36 @@ class ApiService {
   // ─── Auth ───────────────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> login(String email, String password) async {
-    final res = await http.post(
-      Uri.parse(AppConfig.loginEndpoint),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-    final data = jsonDecode(res.body);
-    if (res.statusCode == 200) {
-      if (data['token'] != null) await saveToken(data['token']);
-      return {'success': true, 'data': data};
+    try {
+      final res = await http.post(
+        Uri.parse(AppConfig.loginEndpoint),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      ).timeout(const Duration(seconds: 10));
+      
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        if (data['token'] != null) await saveToken(data['token']);
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Login failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Network error or timeout. Please check your connection or server.'};
     }
-    return {'success': false, 'message': data['message'] ?? 'Login failed'};
   }
 
   static Future<UserModel?> getMe() async {
-    final res = await http.get(
-      Uri.parse(AppConfig.meEndpoint),
-      headers: await _headers(),
-    );
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      return UserModel.fromJson(data['user'] ?? data);
+    try {
+      final res = await http.get(
+        Uri.parse(AppConfig.meEndpoint),
+        headers: await _headers(),
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return UserModel.fromJson(data['user'] ?? data);
+      }
+    } catch (_) {
+      // Return null if request fails or times out
     }
     return null;
   }
@@ -240,6 +249,7 @@ class ApiService {
     required List<String> products,
     String? notes,
     String? collaboratorMrId,
+    String? photoBase64,
   }) async {
     final today = DateTime.now();
     final time =
@@ -253,6 +263,7 @@ class ApiService {
         'products': products,
         'notes': notes,
         if (collaboratorMrId != null) 'collaboratorMrId': collaboratorMrId,
+        if (photoBase64 != null) 'photoBase64': photoBase64,
       }),
     );
     return res.statusCode == 200;
@@ -295,7 +306,7 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getReportLog(String mrId) async {
     final res = await http.get(
-      Uri.parse('${AppConfig.visitsEndpoint}/report?mrId=$mrId&limit=10'),
+      Uri.parse('${AppConfig.visitsEndpoint}?mrId=$mrId&limit=30'),
       headers: await _headers(),
     );
     if (res.statusCode == 200) {

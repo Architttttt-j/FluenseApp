@@ -36,7 +36,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> loadUser() async {
     _isLoading = true;
     notifyListeners();
-    _user = await ApiService.getMe();
+    try {
+      _user = await ApiService.getMe();
+    } catch (e) {
+      _user = null;
+    }
     _isLoading = false;
     notifyListeners();
   }

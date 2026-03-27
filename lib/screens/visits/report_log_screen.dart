@@ -27,7 +27,8 @@ class _ReportLogScreenState extends State<ReportLogScreen> {
     final user = context.read<AuthProvider>().user;
     if (user == null) return;
     setState(() => _loading = true);
-    final visits = await ApiService.getTodayVisits(user.id);
+    final jsonList = await ApiService.getReportLog(user.id);
+    final visits = jsonList.map((j) => VisitModel.fromJson(j)).toList();
     if (mounted) setState(() { _visits = visits; _loading = false; });
   }
 
@@ -86,6 +87,13 @@ class _ReportLogScreenState extends State<ReportLogScreen> {
                     style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
+          const SizedBox(height: 4),
+          if (visit.checkInLocation != null)
+            Text('CheckIn Loc : ${visit.checkInLocation!.lat.toStringAsFixed(5)}, ${visit.checkInLocation!.lng.toStringAsFixed(5)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryText)),
+          if (visit.checkOutLocation != null)
+            Text('CheckOut Loc : ${visit.checkOutLocation!.lat.toStringAsFixed(5)}, ${visit.checkOutLocation!.lng.toStringAsFixed(5)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryText)),
           const SizedBox(height: 6),
           // Client type summary
           if (visit.clientType != null)
