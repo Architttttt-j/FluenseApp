@@ -30,12 +30,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = context.read<AuthProvider>().user;
     if (user == null) return;
     final history = await ApiService.getAttendanceHistory(user.id);
-    if (mounted) setState(() { _attendanceHistory = history; _attendanceLoading = false; });
+    if (mounted) {
+      setState(() {
+        _attendanceHistory = history;
+        _attendanceLoading = false;
+      });
+    }
   }
 
   Future<void> _pickProfileImage() async {
     // MR can only change profile picture
-    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final picked =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (picked != null && mounted) {
       // Upload logic would go here
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,11 +60,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.secondaryText)),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppTheme.secondaryText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign out', style: TextStyle(color: AppTheme.error)),
+            child:
+                const Text('Sign out', style: TextStyle(color: AppTheme.error)),
           ),
         ],
       ),
@@ -104,7 +112,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
                     child: user.avatarUrl == null
                         ? Text(
-                            user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                            user.name.isNotEmpty
+                                ? user.name[0].toUpperCase()
+                                : 'U',
                             style: const TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.w700,
@@ -124,9 +134,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.primaryText,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.background, width: 2),
+                          border:
+                              Border.all(color: AppTheme.background, width: 2),
                         ),
-                        child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                        child: const Icon(Icons.camera_alt,
+                            size: 14, color: Colors.white),
                       ),
                     ),
                   ),
@@ -138,7 +150,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Text(user.name, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 4),
-            Text(user.displayRole, style: Theme.of(context).textTheme.bodyMedium),
+            Text(user.displayRole,
+                style: Theme.of(context).textTheme.bodyMedium),
 
             const SizedBox(height: 24),
 
@@ -163,7 +176,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          _infoRow(icon: Icons.email_outlined, label: 'Email', value: user.email),
+          _infoRow(
+              icon: Icons.email_outlined, label: 'Email', value: user.email),
           _divider(),
           _infoRow(
               icon: Icons.location_on_outlined,
@@ -171,10 +185,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: user.region ?? '—'),
           _divider(),
           if (user.phone != null)
-            _infoRow(icon: Icons.phone_outlined, label: 'Phone', value: user.phone!),
+            _infoRow(
+                icon: Icons.phone_outlined, label: 'Phone', value: user.phone!),
           if (user.phone != null) _divider(),
           if (user.dob != null)
-            _infoRow(icon: Icons.cake_outlined, label: 'Date of Birth', value: user.dob!),
+            _infoRow(
+                icon: Icons.cake_outlined,
+                label: 'Date of Birth',
+                value: user.dob!),
           if (user.dob != null) _divider(),
           if (user.joinDate != null)
             _infoRow(
@@ -186,7 +204,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _infoRow({required IconData icon, required String label, required String value}) {
+  Widget _infoRow(
+      {required IconData icon, required String label, required String value}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -208,9 +227,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _divider() => const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16),
-    child: Divider(height: 1),
-  );
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Divider(height: 1),
+      );
 
   Widget _buildAttendanceCard() {
     return Container(
@@ -226,9 +245,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           if (_attendanceLoading)
             const Center(
-                child: CircularProgressIndicator(color: AppTheme.primaryText, strokeWidth: 2))
+                child: CircularProgressIndicator(
+                    color: AppTheme.primaryText, strokeWidth: 2))
           else if (_attendanceHistory.isEmpty)
-            Text('No attendance records', style: Theme.of(context).textTheme.bodySmall)
+            Text('No attendance records',
+                style: Theme.of(context).textTheme.bodySmall)
           else
             ..._attendanceHistory.take(10).map((a) => _attendanceRow(a)),
         ],
@@ -257,15 +278,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(a.date, style: Theme.of(context).textTheme.bodyMedium),
           ),
           if (a.checkIn != null)
-            Text('In: ${a.checkIn!}', style: Theme.of(context).textTheme.bodySmall),
+            Text('In: ${a.checkIn!}',
+                style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(width: 8),
           if (a.checkOut != null)
-            Text('Out: ${a.checkOut!}', style: Theme.of(context).textTheme.bodySmall),
+            Text('Out: ${a.checkOut!}',
+                style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(width: 8),
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+            decoration:
+                BoxDecoration(color: statusColor, shape: BoxShape.circle),
           ),
         ],
       ),

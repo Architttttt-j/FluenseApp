@@ -57,38 +57,49 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user == null) return;
 
     setState(() => _attendanceLoading = true);
-    final pos = await LocationService.getCurrentPosition();
-    if (pos == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to get location. Check permissions.')),
+    try {
+      final pos = await LocationService.getCurrentPosition();
+      if (pos == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Unable to get location. Check permissions.')),
+          );
+        }
+        setState(() => _attendanceLoading = false);
+        return;
+      }
+
+      bool success;
+      if (_attendance == null || !_attendance!.isCheckedIn) {
+        success = await ApiService.checkIn(
+          mrId: user.id,
+          lat: pos.latitude,
+          lng: pos.longitude,
+        );
+      } else {
+        success = await ApiService.checkOut(
+          mrId: user.id,
+          lat: pos.latitude,
+          lng: pos.longitude,
         );
       }
-      setState(() => _attendanceLoading = false);
-      return;
-    }
 
-    bool success;
-    if (_attendance == null || !_attendance!.isCheckedIn) {
-      success = await ApiService.checkIn(
-        mrId: user.id,
-        lat: pos.latitude,
-        lng: pos.longitude,
-      );
-    } else {
-      success = await ApiService.checkOut(
-        mrId: user.id,
-        lat: pos.latitude,
-        lng: pos.longitude,
-      );
-    }
-
-    if (success) await _loadData();
-    if (mounted) {
-      setState(() => _attendanceLoading = false);
-      if (!success) {
+      if (success) await _loadData();
+      if (mounted) {
+        setState(() => _attendanceLoading = false);
+        if (!success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Attendance update failed. Try again.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _attendanceLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Attendance update failed. Try again.')),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     }
@@ -132,13 +143,26 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primaryText,
         unselectedItemColor: AppTheme.secondaryText,
-        selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        selectedLabelStyle:
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clients'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Reports'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              activeIcon: Icon(Icons.people),
+              label: 'Clients'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Reports'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile'),
         ],
       ),
     );
@@ -174,7 +198,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 user?.name ?? '',
-                                style: Theme.of(context).textTheme.headlineMedium,
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
                               ),
                             ],
                           ),
@@ -247,12 +272,15 @@ class _HomeScreenState extends State<HomeScreen> {
           _attendanceTab(
             label: 'in',
             active: checkedIn,
-            onTap: (!checkedIn && !_attendanceLoading) ? _handleAttendance : null,
+            onTap:
+                (!checkedIn && !_attendanceLoading) ? _handleAttendance : null,
           ),
           _attendanceTab(
             label: 'out',
             active: checkedOut,
-            onTap: (checkedIn && !checkedOut && !_attendanceLoading) ? _handleAttendance : null,
+            onTap: (checkedIn && !checkedOut && !_attendanceLoading)
+                ? _handleAttendance
+                : null,
           ),
         ],
       ),
@@ -274,12 +302,14 @@ class _HomeScreenState extends State<HomeScreen> {
             color: active ? AppTheme.primaryText : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
           ),
-          child: _attendanceLoading && label == ((_attendance?.isCheckedIn ?? false) ? 'out' : 'in')
+          child: _attendanceLoading &&
+                  label == ((_attendance?.isCheckedIn ?? false) ? 'out' : 'in')
               ? const Center(
                   child: SizedBox(
                     height: 16,
                     width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   ),
                 )
               : Text(
@@ -378,7 +408,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           trailing ??
-              const Icon(Icons.chevron_right, color: AppTheme.secondaryText, size: 20),
+              const Icon(Icons.chevron_right,
+                  color: AppTheme.secondaryText, size: 20),
         ],
       ),
     );
@@ -398,7 +429,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Today's Goal", style: Theme.of(context).textTheme.titleMedium),
+              Text("Today's Goal",
+                  style: Theme.of(context).textTheme.titleMedium),
               Text(
                 '${goal.achieved}/${goal.target}',
                 style: const TextStyle(
@@ -420,7 +452,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (goal.description != null) ...[
             const SizedBox(height: 8),
-            Text(goal.description!, style: Theme.of(context).textTheme.bodySmall),
+            Text(goal.description!,
+                style: Theme.of(context).textTheme.bodySmall),
           ],
         ],
       ),

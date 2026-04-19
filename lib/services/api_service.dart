@@ -39,14 +39,17 @@ class ApiService {
 
   // ─── Auth ───────────────────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+      String email, String password) async {
     try {
-      final res = await http.post(
-        Uri.parse(AppConfig.loginEndpoint),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      ).timeout(const Duration(seconds: 10));
-      
+      final res = await http
+          .post(
+            Uri.parse(AppConfig.loginEndpoint),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 10));
+
       final data = jsonDecode(res.body);
       if (res.statusCode == 200) {
         if (data['token'] != null) await saveToken(data['token']);
@@ -54,16 +57,22 @@ class ApiService {
       }
       return {'success': false, 'message': data['message'] ?? 'Login failed'};
     } catch (e) {
-      return {'success': false, 'message': 'Network error or timeout. Please check your connection or server.'};
+      return {
+        'success': false,
+        'message':
+            'Network error or timeout. Please check your connection or server.'
+      };
     }
   }
 
   static Future<UserModel?> getMe() async {
     try {
-      final res = await http.get(
-        Uri.parse(AppConfig.meEndpoint),
-        headers: await _headers(),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .get(
+            Uri.parse(AppConfig.meEndpoint),
+            headers: await _headers(),
+          )
+          .timeout(const Duration(seconds: 10));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         return UserModel.fromJson(data['user'] ?? data);
@@ -97,22 +106,26 @@ class ApiService {
     required double lat,
     required double lng,
   }) async {
-    final today = DateTime.now();
-    final date =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    final time =
-        '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
-    final res = await http.post(
-      Uri.parse('${AppConfig.attendanceEndpoint}/checkin'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'mrId': mrId,
-        'date': date,
-        'checkIn': time,
-        'checkInLocation': {'lat': lat, 'lng': lng},
-      }),
-    );
-    return res.statusCode == 200 || res.statusCode == 201;
+    try {
+      final today = DateTime.now();
+      final date =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final time =
+          '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
+      final res = await http.post(
+        Uri.parse('${AppConfig.attendanceEndpoint}/checkin'),
+        headers: await _headers(),
+        body: jsonEncode({
+          'mrId': mrId,
+          'date': date,
+          'checkIn': time,
+          'checkInLocation': {'lat': lat, 'lng': lng},
+        }),
+      );
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
   }
 
   static Future<bool> checkOut({
@@ -120,22 +133,26 @@ class ApiService {
     required double lat,
     required double lng,
   }) async {
-    final today = DateTime.now();
-    final date =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    final time =
-        '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
-    final res = await http.post(
-      Uri.parse('${AppConfig.attendanceEndpoint}/checkout'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'mrId': mrId,
-        'date': date,
-        'checkOut': time,
-        'checkOutLocation': {'lat': lat, 'lng': lng},
-      }),
-    );
-    return res.statusCode == 200 || res.statusCode == 201;
+    try {
+      final today = DateTime.now();
+      final date =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final time =
+          '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
+      final res = await http.post(
+        Uri.parse('${AppConfig.attendanceEndpoint}/checkout'),
+        headers: await _headers(),
+        body: jsonEncode({
+          'mrId': mrId,
+          'date': date,
+          'checkOut': time,
+          'checkOutLocation': {'lat': lat, 'lng': lng},
+        }),
+      );
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
   }
 
   static Future<List<AttendanceModel>> getAttendanceHistory(String mrId) async {
@@ -146,14 +163,17 @@ class ApiService {
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       final list = data is List ? data : (data['data'] ?? []);
-      return list.map<AttendanceModel>((j) => AttendanceModel.fromJson(j)).toList();
+      return list
+          .map<AttendanceModel>((j) => AttendanceModel.fromJson(j))
+          .toList();
     }
     return [];
   }
 
   // ─── Clients ────────────────────────────────────────────────────────────────
 
-  static Future<List<ClientModel>> getClients({String? regionId, String? type}) async {
+  static Future<List<ClientModel>> getClients(
+      {String? regionId, String? type}) async {
     String url = AppConfig.clientsEndpoint;
     final params = <String, String>{};
     if (regionId != null) params['regionId'] = regionId;
@@ -237,9 +257,15 @@ class ApiService {
     );
     final data = jsonDecode(res.body);
     if (res.statusCode == 200 || res.statusCode == 201) {
-      return {'success': true, 'visitId': data['_id'] ?? data['id'] ?? data['visitId']};
+      return {
+        'success': true,
+        'visitId': data['_id'] ?? data['id'] ?? data['visitId']
+      };
     }
-    return {'success': false, 'message': data['message'] ?? 'Failed to start visit'};
+    return {
+      'success': false,
+      'message': data['message'] ?? 'Failed to start visit'
+    };
   }
 
   static Future<bool> endVisit({
